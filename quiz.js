@@ -1,1 +1,167 @@
-// select all elements const start = document.getElementById("start"); const quiz = document.getElementById("quiz"); const question = document.getElementById("question"); const qImg = document.getElementById("qImg"); const choiceA = document.getElementById("A"); const choiceB = document.getElementById("B"); const choiceC = document.getElementById("C"); const counter = document.getElementById("counter"); const timeGauge = document.getElementById("timeGauge"); const progress = document.getElementById("progress"); const scoreDiv = document.getElementById("scoreContainer"); // create our questions let questions = [ { question : "Apakah ini simbol dari HTML5?", imgSrc : "img/html.png", choiceA : "Benar", choiceB : "Salah", choiceC : "Salah", correct : "A" },{ question : "Apakah ini simbol dari CSS3?", imgSrc : "img/css.png", choiceA : "Salah", choiceB : "Benar", choiceC : "Salah", correct : "B" },{ question : "Apakah ini simbol dari JavaScript?", imgSrc : "img/js.png", choiceA : "Salah", choiceB : "Salah", choiceC : "Benar", correct : "C" } ]; // create some variables const lastQuestion = questions.length - 1; let runningQuestion = 0; let count = 0; const questionTime = 10; // 10s const gaugeWidth = 150; // 150px const gaugeUnit = gaugeWidth / questionTime; let TIMER; let score = 0; // render a question function renderQuestion(){ let q = questions[runningQuestion]; question.innerHTML = "<p>"+ q.question +"</p>"; qImg.innerHTML = "<img src="+ q.imgSrc +">"; choiceA.innerHTML = q.choiceA; choiceB.innerHTML = q.choiceB; choiceC.innerHTML = q.choiceC; } start.addEventListener("click",startQuiz); // start quiz function startQuiz(){ start.style.display = "none"; renderQuestion(); quiz.style.display = "block"; renderProgress(); renderCounter(); TIMER = setInterval(renderCounter,1000); // 1000ms = 1s } // render progress function renderProgress(){ for(let qIndex = 0; qIndex <= lastQuestion; qIndex++){ progress.innerHTML += "<div class='prog' id="+ qIndex +"></div>"; } } // counter render function renderCounter(){ if(count <= questionTime){ counter.innerHTML = count; timeGauge.style.width = count * gaugeUnit + "px"; count++ }else{ count = 0; // change progress color to red answerIsWrong(); if(runningQuestion < lastQuestion){ runningQuestion++; renderQuestion(); }else{ // end the quiz and show the score clearInterval(TIMER); scoreRender(); } } } // checkAnwer function checkAnswer(answer){ if( answer == questions[runningQuestion].correct){ // answer is correct score++; // change progress color to green answerIsCorrect(); }else{ // answer is wrong // change progress color to red answerIsWrong(); } count = 0; if(runningQuestion < lastQuestion){ runningQuestion++; renderQuestion(); }else{ // end the quiz and show the score clearInterval(TIMER); scoreRender(); } } // answer is correct function answerIsCorrect(){ document.getElementById(runningQuestion).style.backgroundColor = "#0f0"; } // answer is Wrong function answerIsWrong(){ document.getElementById(runningQuestion).style.backgroundColor = "#f00"; } // score render function scoreRender(){ scoreDiv.style.display = "block"; // calculate the amount of question percent answered by the user const scorePerCent = Math.round(100 * score/questions.length); // choose the image based on the scorePerCent let img = (scorePerCent >= 80) ? "img/5.png" : (scorePerCent >= 60) ? "img/4.png" : (scorePerCent >= 40) ? "img/3.png" : (scorePerCent >= 20) ? "img/2.png" : "img/1.png"; scoreDiv.innerHTML = "<img src="+ img +">"; scoreDiv.innerHTML += "<p>"+ scorePerCent +"%</p>"; }
+(function() {
+  var questions = [{
+    question: "Berapa 2*5?",
+    choices: [2, 5, 10, 15, 20],
+    correctAnswer: 2
+  }, {
+    question: "Berapa Hasil dari 3*6?",
+    choices: [3, 6, 9, 12, 18],
+    correctAnswer: 4
+  }, {
+    question: "Berapa Hasil dari 8*9?",
+    choices: [72, 99, 108, 134, 156],
+    correctAnswer: 0
+  }, {
+    question: "Berapa Hasil dari 1*7?",
+    choices: [4, 5, 6, 7, 8],
+    correctAnswer: 3
+  }, {
+    question: "What is 8*8?",
+    choices: [20, 30, 40, 50, 64],
+    correctAnswer: 4
+  }];
+  
+  var questionCounter = 0; //Tracks question number
+  var selections = []; //Array containing user choices
+  var quiz = $('#quiz'); //Quiz div object
+  
+  // Display initial question
+  displayNext();
+  
+  // Click handler for the 'next' button
+  $('#next').on('click', function (e) {
+    e.preventDefault();
+    
+    // Suspend click listener during fade animation
+    if(quiz.is(':animated')) {        
+      return false;
+    }
+    choose();
+    
+    // If no user selection, progress is stopped
+    if (isNaN(selections[questionCounter])) {
+      alert('Please make a selection!');
+    } else {
+      questionCounter++;
+      displayNext();
+    }
+  });
+  
+  // Click handler for the 'prev' button
+  $('#prev').on('click', function (e) {
+    e.preventDefault();
+    
+    if(quiz.is(':animated')) {
+      return false;
+    }
+    choose();
+    questionCounter--;
+    displayNext();
+  });
+  
+  // Click handler for the 'Start Over' button
+  $('#start').on('click', function (e) {
+    e.preventDefault();
+    
+    if(quiz.is(':animated')) {
+      return false;
+    }
+    questionCounter = 0;
+    selections = [];
+    displayNext();
+    $('#start').hide();
+  });
+  
+  // Animates buttons on hover
+  $('.button').on('mouseenter', function () {
+    $(this).addClass('active');
+  });
+  $('.button').on('mouseleave', function () {
+    $(this).removeClass('active');
+  });
+  
+  // Creates and returns the div that contains the questions and 
+  // the answer selections
+  function createQuestionElement(index) {
+    var qElement = $('<div>', {
+      id: 'question'
+    });
+    
+    var header = $('<h2>Pertanyaan ' + (index + 1) + ':</h2>');
+    qElement.append(header);
+    
+    var question = $('<p>').append(questions[index].question);
+    qElement.append(question);
+    
+    var radioButtons = createRadios(index);
+    qElement.append(radioButtons);
+    
+    return qElement;
+  }
+  
+  // Creates a list of the answer choices as radio inputs
+  function createRadios(index) {
+    var radioList = $('<ul>');
+    var item;
+    var input = '';
+    for (var i = 0; i < questions[index].choices.length; i++) {
+      item = $('<li>');
+      input = '<input type="radio" name="answer" value=' + i + ' />';
+      input += questions[index].choices[i];
+      item.append(input);
+      radioList.append(item);
+    }
+    return radioList;
+  }
+  
+  // Reads the user selection and pushes the value to an array
+  function choose() {
+    selections[questionCounter] = +$('input[name="answer"]:checked').val();
+  }
+  
+  // Displays next requested element
+  function displayNext() {
+    quiz.fadeOut(function() {
+      $('#question').remove();
+      
+      if(questionCounter < questions.length){
+        var nextQuestion = createQuestionElement(questionCounter);
+        quiz.append(nextQuestion).fadeIn();
+        if (!(isNaN(selections[questionCounter]))) {
+          $('input[value='+selections[questionCounter]+']').prop('checked', true);
+        }
+        
+        // Controls display of 'prev' button
+        if(questionCounter === 1){
+          $('#prev').show();
+        } else if(questionCounter === 0){
+          
+          $('#prev').hide();
+          $('#next').show();
+        }
+      }else {
+        var scoreElem = displayScore();
+        quiz.append(scoreElem).fadeIn();
+        $('#next').hide();
+        $('#prev').hide();
+        $('#start').show();
+      }
+    });
+  }
+  
+  // Computes score and returns a paragraph element to be displayed
+  function displayScore() {
+    var score = $('<p>',{id: 'question'});
+    
+    var numCorrect = 0;
+    for (var i = 0; i < selections.length; i++) {
+      if (selections[i] === questions[i].correctAnswer) {
+        numCorrect++;
+      }
+    }
+    
+    score.append('Kamu Menjawab ' + numCorrect + ' pertanyaan dari ' +
+                 questions.length + ' right!!!');
+    return score;
+  }
+})();
